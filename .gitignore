@@ -1,12 +1,23 @@
-Tutorial/Assets/Scenes
-Tutorial/Library
-Tutorial/Logs
-Tutorial/Packages
-Tutorial/ProjectSettings
-Tutorial/UserSettings
-
-
-
+Survival/Assets/Scenes
+Survival/Assets/3D Model
+Survival/Assets/Image
+Survival/Assets/Materials
+Survival/Assets/Particle System
+Survival/Assets/SkyBox
+Survival/Assets/Sound
+Survival/Assets/Textures
+Survival/Assets/'Water Shader'
+Survival/Library
+Survival/Logs
+Survival/Packages
+Survival/ProjectSettings
+Survival/UserSettings
+Survival/Temp
+Survival/UserSettings
+*.meta
+*.mat
+*.shader
+*.jpg
 
 
 
