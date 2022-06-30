@@ -4,36 +4,99 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    // 스피드 조정 변수
     [SerializeField] // private 상태는 유지하여 이 스크립트 내에서만 수정 가능하도록 하되 유니티 인스펙터 창에서 쉽게 수정할 수 있게 해주도록 함
-    private float walkspeed;
+    private float walkSpeed; // 걷는 속도
+    [SerializeField]
+    private float runSpeed; // 달리는 속도
+    private float applySpeed; // 걷는 속도와 달리는 속도를 매개할 변수
 
+    // 상태 판정 변수
+    private bool isRun = false;
+    private bool isGround = true;
+
+    // 점프 변수
+    [SerializeField]
+    private float jumpForce;
+
+    // 땅 착지 여부를 위한 변수
+    private CapsuleCollider capsuleCollider;
+
+    // 카메라 민감도
     [SerializeField]
     private float lookSensitivity; // 카메라의 민감도
 
+    // 카메라 한계
     [SerializeField]
     private float cameraRotationLimit; // 고개를 움직일 때 최대 움직일 수 있는 각도 설정
-
     private float currentCameraRotationX = 0; // 기본적으로 카메라는 정면을 보도록 설정
 
+    // 필요한 컴포넌트
     [SerializeField]
     private Camera theCamera;
-
     private Rigidbody myRigid; // 플레이어의 실제 육체적인 몸을 의미함
     // Collider는 충돌 영역을 설정하고 Rigidbody는 Collider에 물리학 (중력, 저항 등)을 입히는 것임
 
     // Start is called before the first frame update
     void Start()
     {
+        capsuleCollider = GetComponent<CapsuleCollider>();
         myRigid = GetComponent<Rigidbody>(); // Rigidbody 컴포넌트를 myRigid 변수에 넣는다는 뜻
-
+        applySpeed = walkSpeed; // 처음에는 applySpeed를 걷는 속도로 초기화
     }
 
     // Update is called once per frame
     void Update()
     {
+        IsGround();
+        TryJump();
+        TryRun(); // 뛰는지 걷는지 판단하고 움직임을 제어할 것이기 때문에 반드시 Move() 위에 있어야 함
         Move();
         CameraRotation();
         CharactorRotation();
+    }
+
+    private void IsGround()
+    {
+        isGround = Physics.Raycast(transform.position, Vector3.down, capsuleCollider.bounds.extents.y + 0.1f);
+    }
+
+    private void TryJump()
+    {
+        if (Input.GetKeyDown(KeyCode.Space) && isGround)
+        {
+            Jump();
+        }
+    }
+
+    private void Jump()
+    {
+        myRigid.velocity = transform.up * jumpForce;
+    }
+
+    private void TryRun()
+    {
+        if (Input.GetKey(KeyCode.LeftShift)) // shift를 누르면 달림
+        {
+            Running();
+        }
+        if (Input.GetKeyUp(KeyCode.LeftShift)) // 떼면 달리기 취소
+        {
+            RunningCancel();
+        }
+    }
+
+    private void Running()
+    {
+
+        isRun = true;
+        applySpeed = runSpeed;
+    }
+
+    private void RunningCancel()
+    {
+        isRun = false;
+        applySpeed = walkSpeed;
     }
 
     private void Move() // player 이동
@@ -43,7 +106,7 @@ public class PlayerController : MonoBehaviour
 
         Vector3 _moveHorizontal = transform.right * _moveDirX; // 좌우 방향, transform.right는 벡터 (절대적인 좌표 기준이 아니라 agent 기준임)
         Vector3 _moveVertical = transform.forward * _moveDirZ; // 앞뒤 방향, transform.forward는 벡터
-        Vector3 _velocity = (_moveHorizontal + _moveVertical).normalized * walkspeed; // 표준 속도 계산
+        Vector3 _velocity = (_moveHorizontal + _moveVertical).normalized * applySpeed; // 표준 속도 계산
 
         myRigid.MovePosition(transform.position + _velocity * Time.deltaTime); // update는 매 프레임마다 실행되기 때문에 순간이동하는 것이 아니라 deltatime으로 자연스럽게 움직이게 해줘야 됨
         // 또한 컴퓨터마다 다른 성능으로 인해 초당 프레임이 다른데, 이 효과를 deltatime이 보정해주는 역할을 함
