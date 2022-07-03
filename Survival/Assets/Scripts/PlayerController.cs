@@ -58,7 +58,7 @@ public class PlayerController : MonoBehaviour
 
     private void IsGround()
     {
-        isGround = Physics.Raycast(transform.position, Vector3.down, capsuleCollider.bounds.extents.y + 0.1f);
+        isGround = Physics.Raycast(transform.position, Vector3.down, capsuleCollider.bounds.extents.y + 0.1f); // 대각선에 의한 오차를 고려하기 위해 0.1f 추가해줌
     }
 
     private void TryJump()
@@ -86,14 +86,14 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Running()
+    private void Running() // TryRun 하위함수
     {
 
         isRun = true;
         applySpeed = runSpeed;
     }
 
-    private void RunningCancel()
+    private void RunningCancel() // TryRun 하위함수
     {
         isRun = false;
         applySpeed = walkSpeed;
