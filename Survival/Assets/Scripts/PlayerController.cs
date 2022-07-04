@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour // 클래스 상속 (인터페이스 개념과 헷갈리지 말 것)
 {
     // 스피드 조정 변수
     [SerializeField] // private 상태는 유지하여 이 스크립트 내에서만 수정 가능하도록 하되 유니티 인스펙터 창에서 쉽게 수정할 수 있게 해주도록 함
