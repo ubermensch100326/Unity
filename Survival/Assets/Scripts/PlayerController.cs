@@ -9,11 +9,20 @@ public class PlayerController : MonoBehaviour // 클래스 상속 (인터페이�
     private float walkSpeed; // 걷는 속도
     [SerializeField]
     private float runSpeed; // 달리는 속도
+    [SerializeField]
+    private float crouchSpeed; // 앉기 속도
     private float applySpeed; // 걷는 속도와 달리는 속도를 매개할 변수
 
     // 상태 판정 변수
     private bool isRun = false;
+    private bool isCrouch = false;
     private bool isGround = true;
+
+    // 앉았을 때 얼마나 앉을지 결정하는 변수
+    [SerializeField]
+    private float crouchPosY; // 숙였을 때의 높이
+    private float originPosY; // 처음 높이
+    private float applyCrouchPosY; // 매개 변수
 
     // 점프 변수
     [SerializeField]
@@ -38,11 +47,15 @@ public class PlayerController : MonoBehaviour // 클래스 상속 (인터페이�
     // Collider는 충돌 영역을 설정하고 Rigidbody는 Collider에 물리학 (중력, 저항 등)을 입히는 것임
 
     // Start is called before the first frame update
+
+
     void Start()
     {
         capsuleCollider = GetComponent<CapsuleCollider>();
         myRigid = GetComponent<Rigidbody>(); // Rigidbody 컴포넌트를 myRigid 변수에 넣는다는 뜻
         applySpeed = walkSpeed; // 처음에는 applySpeed를 걷는 속도로 초기화
+        originPosY = theCamera.transform.localPosition.y;
+        applyCrouchPosY = originPosY; // applyCrouchPosY를 기본적으로 서 있는 상태로 초기화
     }
 
     // Update is called once per frame
@@ -51,17 +64,60 @@ public class PlayerController : MonoBehaviour // 클래스 상속 (인터페이�
         IsGround();
         TryJump();
         TryRun(); // 뛰는지 걷는지 판단하고 움직임을 제어할 것이기 때문에 반드시 Move() 위에 있어야 함
+        TryCrouch();
         Move();
         CameraRotation();
         CharactorRotation();
     }
 
-    private void IsGround()
+    private void TryCrouch() // 앉기 시도
+    {
+        if (Input.GetKeyDown(KeyCode.LeftControl))
+        {
+            Crouch();
+        }
+    }
+
+    private void Crouch() // 앉기 동작
+    {
+        isCrouch = !isCrouch;
+
+        if (isCrouch == true)
+        {
+            applySpeed = crouchSpeed;
+            applyCrouchPosY = crouchPosY;
+        }
+        else
+        {
+            applySpeed = walkSpeed;
+            applyCrouchPosY = originPosY;
+        }
+
+        StartCoroutine(CrouchCoroutine());
+    }
+
+    IEnumerator CrouchCoroutine() // 앉는 모습을 부드럽게 하기 위함
+    {
+        float _posY = theCamera.transform.localPosition.y;
+        int count = 0;
+
+        while (_posY != applyCrouchPosY)
+        {
+            _posY = Mathf.Lerp(_posY, applyCrouchPosY, 0.3f);
+            theCamera.transform.localPosition = new Vector3(0, _posY, 0);
+            if (count > 15)
+                break;
+            yield return null;
+        }
+        theCamera.transform.localPosition = new Vector3(0, applyCrouchPosY, 0);
+    }
+
+    private void IsGround() // 지면 체크
     {
         isGround = Physics.Raycast(transform.position, Vector3.down, capsuleCollider.bounds.extents.y + 0.1f); // 대각선에 의한 오차를 고려하기 위해 0.1f 추가해줌
     }
 
-    private void TryJump()
+    private void TryJump() // 점프 시도
     {
         if (Input.GetKeyDown(KeyCode.Space) && isGround)
         {
@@ -69,12 +125,14 @@ public class PlayerController : MonoBehaviour // 클래스 상속 (인터페이�
         }
     }
 
-    private void Jump()
+    private void Jump() // 점프 동작
     {
+        if (isCrouch) // 앉은 상태에서 점프하면 해제
+            Crouch();
         myRigid.velocity = transform.up * jumpForce;
     }
 
-    private void TryRun()
+    private void TryRun() // 달리기 시도
     {
         if (Input.GetKey(KeyCode.LeftShift)) // shift를 누르면 달림
         {
@@ -86,14 +144,16 @@ public class PlayerController : MonoBehaviour // 클래스 상속 (인터페이�
         }
     }
 
-    private void Running() // TryRun 하위함수
+    private void Running() // 달리기 동작, TryRun 하위함수
     {
+        if (isCrouch)
+            Crouch();
 
         isRun = true;
         applySpeed = runSpeed;
     }
 
-    private void RunningCancel() // TryRun 하위함수
+    private void RunningCancel() // 달리기 동작 취소, TryRun 하위함수
     {
         isRun = false;
         applySpeed = walkSpeed;
